@@ -1,0 +1,88 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>分類管理</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 0 20px;
+            background: #f5f7fa;
+        }
+        input { padding: 10px; }
+        button { padding: 8px 12px; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th { background: #dce8f2; }
+    </style>
+</head>
+<body>
+    <h1>📂 歌曲分類管理</h1>
+
+    {% with messages = get_flashed_messages() %}
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    {% endwith %}
+
+    <h2>新增分類</h2>
+
+    <form action="{{ url_for('manage_categories') }}" method="POST">
+        <label for="name">分類名稱：</label>
+        <input
+            id="name"
+            name="name"
+            type="text"
+            placeholder="例如：電影配樂"
+            required>
+        <button type="submit">新增分類</button>
+    </form>
+
+    <h2>現有分類</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>分類名稱</th>
+                <th>歌曲數量</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for category in categories %}
+                <tr>
+                    <td>{{ category.name }}</td>
+                    <td>{{ category.song_count }}</td>
+                    <td>
+                        <form
+                            action="{{ url_for('delete_category', category_id=category.id) }}"
+                            method="POST"
+                            onsubmit="return confirm('確定要刪除這個分類嗎？');">
+                            <button type="submit">刪除分類</button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="3">目前沒有分類。</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <p><a href="{{ url_for('index') }}">返回歌單</a></p>
+</body>
+</html>

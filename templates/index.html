@@ -1,0 +1,295 @@
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>我的歌單分類</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, "Microsoft JhengHei", sans-serif;
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 0 20px;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        h1 {
+            color: #34495e;
+        }
+
+        .toolbar {
+            margin: 24px 0;
+            padding: 24px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px #0000000a;
+        }
+
+        .search-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccd3dc;
+            border-radius: 6px;
+            font-size: 15px;
+            background: white;
+        }
+
+        button, .link-button {
+            display: inline-block;
+            padding: 9px 15px;
+            border: none;
+            border-radius: 6px;
+            background: #426b8a;
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        button:hover, .link-button:hover {
+            background: #31536d;
+        }
+
+        .secondary {
+            background: #e8edf2;
+            color: #34495e;
+        }
+
+        .secondary:hover {
+            background: #d8e0e8;
+        }
+
+        .toolbar-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+            align-items: center;
+        }
+
+        .toolbar-actions a {
+            text-decoration: none;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 6px;
+            background: #e4f5e9;
+            color: #176b45;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            background: white;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            min-width: 650px;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border-bottom: 1px solid #e5e9ef;
+            padding: 14px 12px;
+            text-align: left;
+        }
+
+        th {
+            background: #dce8f2;
+            color: #34495e;
+        }
+
+        tbody tr:hover {
+            background: #f7fafd;
+        }
+
+        .operation {
+            white-space: nowrap;
+        }
+
+        .edit-link {
+            color: #286b9a;
+        }
+
+        .delete-button {
+            background: #c94c4c;
+        }
+
+        .delete-button:hover {
+            background: #a83737;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 28px;
+            color: #777;
+        }
+
+        .song-count {
+            color: #667788;
+            font-size: 14px;
+        }
+
+        @media (max-width: 650px) {
+            body {
+                margin: 20px auto;
+                padding: 0 12px;
+            }
+
+            .search-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .toolbar {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🎵 我的歌單分類</h1>
+
+    {% with messages = get_flashed_messages() %}
+        {% for message in messages %}
+            <p class="message">{{ message }}</p>
+        {% endfor %}
+    {% endwith %}
+
+    <section class="toolbar">
+        <h2>搜尋歌曲</h2>
+
+        <form action="{{ url_for('index') }}" method="GET">
+            <div class="search-grid">
+
+                <div class="field">
+                    <label for="artist">歌手名稱</label>
+                    <input
+                        type="text"
+                        id="artist"
+                        name="artist"
+                        placeholder="例如：紅月、LiSA"
+                        value="{{ artist_keyword or '' }}">
+                </div>
+
+                <div class="field">
+                    <label for="source">出處名稱</label>
+                    <input
+                        type="text"
+                        id="source"
+                        name="source"
+                        placeholder="例如：偶像夢幻季、鬼滅之刃"
+                        value="{{ source_keyword or '' }}">
+                </div>
+
+                <div class="field">
+                    <label for="category_id">歌曲分類</label>
+                    <select name="category_id" id="category_id">
+                        <option value="">全部分類</option>
+
+                        {% for category in categories %}
+                            <option
+                                value="{{ category.id }}"
+                                {% if selected_category == category.id %}
+                                    selected
+                                {% endif %}>
+                                {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+            </div>
+
+            <div class="toolbar-actions">
+                <button type="submit">搜尋歌曲</button>
+                <a class="link-button secondary"
+                   href="{{ url_for('index') }}">清除條件</a>
+            </div>
+        </form>
+
+        <div class="toolbar-actions">
+            <a class="link-button"
+               href="{{ url_for('add_song') }}">＋ 新增歌曲</a>
+
+            <a class="link-button secondary"
+               href="{{ url_for('manage_categories') }}">管理分類</a>
+        </div>
+    </section>
+
+    <h2>歌曲清單</h2>
+    <p class="song-count">目前找到 {{ songs|length }} 首歌曲</p>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>歌名</th>
+                    <th>歌手</th>
+                    <th>出處</th>
+                    <th>分類</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for song in songs %}
+                    <tr>
+                        <td>{{ song.title }}</td>
+                        <td>{{ song.artist }}</td>
+                        <td>{{ song.source }}</td>
+                        <td>{{ song.category_name }}</td>
+                        <td class="operation">
+                            <a class="edit-link"
+                               href="{{ url_for('edit_song', song_id=song.id) }}">
+                                修改
+                            </a>
+
+                            <form
+                                action="{{ url_for('delete_song', song_id=song.id) }}"
+                                method="POST"
+                                style="display:inline"
+                                onsubmit="return confirm('確定要刪除這首歌曲嗎？');">
+
+                                <button
+                                    type="submit"
+                                    class="delete-button">
+                                    刪除
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="5" class="empty">
+                            找不到符合條件的歌曲，請嘗試其他搜尋條件。
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
